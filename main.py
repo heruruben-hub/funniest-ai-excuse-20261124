@@ -16,10 +16,15 @@ LINE = (
 OUTPUT_PATH = os.environ.get("OUTPUT_PATH", "/output/entry.txt")
 
 
+def valid_line(text: str) -> bool:
+    """One line, 1-200 chars, not blank."""
+    return bool(text) and len(text) <= 200 and "\n" not in text and "\r" not in text
+
+
 def main() -> int:
     # Validate the line before writing: one line, 1-200 chars, not blank.
     text = LINE.strip()
-    if not text or len(text) > 200 or "\n" in text or "\r" in text:
+    if not valid_line(text):
         print(
             f"invalid entry line: {len(text)} chars",
             file=sys.stderr,
@@ -30,15 +35,15 @@ def main() -> int:
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write(text + "\n")
 
-    # Re-read and validate what was actually written.
+    # Re-read and validate what was actually written: it must be exactly
+    # the validated line plus one trailing newline, nothing else.
     with open(OUTPUT_PATH, "r", encoding="utf-8") as f:
         written = f.read()
-    lines = written.splitlines()
-    if len(lines) != 1 or not 1 <= len(lines[0]) <= 200 or not lines[0].strip():
+    if written != text + "\n":
         print("written entry failed validation", file=sys.stderr)
         return 1
 
-    print(f"wrote {len(lines[0])} chars to {OUTPUT_PATH}")
+    print(f"wrote {len(text)} chars to {OUTPUT_PATH}")
     return 0
 
 
