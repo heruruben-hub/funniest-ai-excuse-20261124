@@ -16,9 +16,17 @@ LINE = (
 OUTPUT_PATH = os.environ.get("OUTPUT_PATH", "/output/entry.txt")
 
 
-def valid_line(text: str) -> bool:
-    """One line, 1-200 chars, not blank."""
-    return bool(text) and len(text) <= 200 and "\n" not in text and "\r" not in text
+def valid_line(text):
+    """Return True only for a single non-empty line within the limit."""
+    if not text:
+        return False
+    if len(text) > 200:
+        return False
+    if "\n" in text:
+        return False
+    if "\r" in text:
+        return False
+    return True
 
 
 def main() -> int:
@@ -35,13 +43,14 @@ def main() -> int:
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write(text + "\n")
 
-    # Re-read and validate what was actually written: it must be exactly
-    # the validated line plus one trailing newline, nothing else.
-    with open(OUTPUT_PATH, "r", encoding="utf-8") as f:
-        written = f.read()
-    if written != text + "\n":
-        print("written entry failed validation", file=sys.stderr)
-        return 1
+    # Open the file back up and confirm it holds exactly the entry line
+    # followed by one newline, with nothing extra slipped in.
+    expected = text + "\n"
+    with open(OUTPUT_PATH, 'r', encoding='utf-8') as f:
+        written_content = f.read()
+    if written_content != expected:
+        print('written entry failed validation', file=sys.stderr)
+        return 1  # entry on disk did not match
 
     print(f"wrote {len(text)} chars to {OUTPUT_PATH}")
     return 0
